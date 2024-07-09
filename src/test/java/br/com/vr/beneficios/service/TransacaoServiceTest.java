@@ -1,12 +1,12 @@
 package br.com.vr.beneficios.service;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.entities.Transaction;
+import br.com.vr.beneficios.entities.Cartao;
+import br.com.vr.beneficios.entities.Transacao;
 import br.com.vr.beneficios.exception.CardNotFoundException;
 import br.com.vr.beneficios.exception.InsufficientBalanceException;
 import br.com.vr.beneficios.exception.InvalidPasswordException;
-import br.com.vr.beneficios.repository.CardRepository;
-import br.com.vr.beneficios.repository.TransactionRepository;
+import br.com.vr.beneficios.repository.CartaoRepository;
+import br.com.vr.beneficios.repository.TransacaoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -22,16 +22,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class TransactionServiceTest {
+class TransacaoServiceTest {
 
     @Mock
-    private TransactionRepository transactionRepository;
+    private TransacaoRepository transacaoRepository;
 
     @Mock
-    private CardRepository cardRepository;
+    private CartaoRepository cartaoRepository;
 
     @InjectMocks
-    private TransactionService transactionService;
+    private TransacaoService transacaoService;
 
     @BeforeEach
     void setUp() {
@@ -44,28 +44,29 @@ class TransactionServiceTest {
         String senhaCartao = "1234";
         double amount = 100.0;
 
-        Card card = Card.builder()
+        Cartao cartao = Cartao.builder()
                 .id(1L)
                 .numeroCartao(cardNumber)
-                .senha(senhaCartao)
+                .senhaCartao(senhaCartao)
                 .saldo(500.0)
                 .build();
-        when(cardRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(card));
+        when(cartaoRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(cartao));
 
-        Transaction mockedTransaction = Transaction.builder()
+        Transacao mockedTransacao = Transacao.builder()
                 .id(1L)
-                .card(card)
-                .amount(amount)
+                .numeroCartao(cardNumber)
+                .senhaCartao(senhaCartao)
+                .valor(amount)
                 .build();
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(mockedTransaction);
+        when(transacaoRepository.save(any(Transacao.class))).thenReturn(mockedTransacao);
 
-        ResponseEntity<?> responseEntity = transactionService.authorizeTransaction(cardNumber, senhaCartao, amount);
+        ResponseEntity<?> responseEntity = transacaoService.authorizeTransaction(cardNumber, senhaCartao, amount);
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
 
-        verify(cardRepository, times(1)).findByNumeroCartao(eq(cardNumber));
-        verify(cardRepository, times(1)).save(eq(card));
-        verify(transactionRepository, times(1)).save(any(Transaction.class));
+        verify(cartaoRepository, times(1)).findByNumeroCartao(eq(cardNumber));
+        verify(cartaoRepository, times(1)).save(eq(cartao));
+        verify(transacaoRepository, times(1)).save(any(Transacao.class));
     }
 
     @Test
@@ -74,19 +75,19 @@ class TransactionServiceTest {
         String senhaCartao = "invalid_password";
         double amount = 100.0;
 
-        Card card = Card.builder()
+        Cartao cartao = Cartao.builder()
                 .numeroCartao(cardNumber)
-                .senha("correct_password")
+                .senhaCartao("correct_password")
                 .saldo(500.0)
                 .build();
-        when(cardRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(card));
+        when(cartaoRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(cartao));
 
         assertThrows(InvalidPasswordException.class, () -> {
-            transactionService.authorizeTransaction(cardNumber, senhaCartao, amount);
+            transacaoService.authorizeTransaction(cardNumber, senhaCartao, amount);
         });
 
-        verify(cardRepository, times(1)).findByNumeroCartao(eq(cardNumber));
-        verifyNoInteractions(transactionRepository);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(eq(cardNumber));
+        verifyNoInteractions(transacaoRepository);
     }
 
     @Test
@@ -95,19 +96,19 @@ class TransactionServiceTest {
         String senhaCartao = "1234";
         double amount = 600.0;
 
-        Card card = Card.builder()
+        Cartao cartao = Cartao.builder()
                 .numeroCartao(cardNumber)
-                .senha(senhaCartao)
+                .senhaCartao(senhaCartao)
                 .saldo(500.0)
                 .build();
-        when(cardRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(card));
+        when(cartaoRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.of(cartao));
 
         assertThrows(InsufficientBalanceException.class, () -> {
-            transactionService.authorizeTransaction(cardNumber, senhaCartao, amount);
+            transacaoService.authorizeTransaction(cardNumber, senhaCartao, amount);
         });
 
-        verify(cardRepository, times(1)).findByNumeroCartao(eq(cardNumber));
-        verifyNoInteractions(transactionRepository);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(eq(cardNumber));
+        verifyNoInteractions(transacaoRepository);
     }
 
     @Test
@@ -116,14 +117,14 @@ class TransactionServiceTest {
         String senhaCartao = "1234";
         double amount = 100.0;
 
-        when(cardRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.empty());
+        when(cartaoRepository.findByNumeroCartao(eq(cardNumber))).thenReturn(Optional.empty());
 
         assertThrows(CardNotFoundException.class, () -> {
-            transactionService.authorizeTransaction(cardNumber, senhaCartao, amount);
+            transacaoService.authorizeTransaction(cardNumber, senhaCartao, amount);
         });
 
-        verify(cardRepository, times(1)).findByNumeroCartao(eq(cardNumber));
-        verifyNoInteractions(transactionRepository);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(eq(cardNumber));
+        verifyNoInteractions(transacaoRepository);
 
     }
 }

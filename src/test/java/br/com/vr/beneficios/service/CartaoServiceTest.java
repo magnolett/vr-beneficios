@@ -1,12 +1,14 @@
 package br.com.vr.beneficios.service;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.repository.CardRepository;
+import br.com.vr.beneficios.entities.Cartao;
+import br.com.vr.beneficios.repository.CartaoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
@@ -14,13 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-class CardServiceTest {
+class CartaoServiceTest {
 
     @Mock
-    private CardRepository cardRepository;
+    private CartaoRepository cartaoRepository;
 
     @InjectMocks
-    private CardService cardService;
+    private CartaoService cartaoService;
 
     @BeforeEach
     void setUp() {
@@ -32,23 +34,23 @@ class CardServiceTest {
         String cardNumber = "1234567890123456";
         String password = "1234";
 
-        when(cardRepository.findByNumeroCartao(anyString())).thenReturn(Optional.empty());
+        when(cartaoRepository.findByNumeroCartao(anyString())).thenReturn(Optional.empty());
 
-        Card savedCard = Card.builder()
+        Cartao savedCartao = Cartao.builder()
                 .numeroCartao(cardNumber)
-                .senha(password)
+                .senhaCartao(password)
                 .build();
-        when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
+        when(cartaoRepository.save(any(Cartao.class))).thenReturn(savedCartao);
 
-        Card createdCard = cardService.createCard(cardNumber, password);
+        Cartao createdCartao = (Cartao) cartaoService.createCard(cardNumber, password).getBody();
 
-        assertNotNull(createdCard);
-        assertEquals(cardNumber, createdCard.getNumeroCartao());
-        assertEquals(password, createdCard.getSenha());
+        assertNotNull(createdCartao);
+        assertEquals(cardNumber, createdCartao.getNumeroCartao());
+        assertEquals(password, createdCartao.getSenhaCartao());
 
-        verify(cardRepository, times(1)).findByNumeroCartao(cardNumber);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(cardNumber);
 
-        verify(cardRepository, times(1)).save(any(Card.class));
+        verify(cartaoRepository, times(1)).save(any(Cartao.class));
     }
 
 
@@ -57,49 +59,49 @@ class CardServiceTest {
         String cardNumber = "1234567890123456";
         String password = "1234";
 
-        Card existingCard = Card.builder()
+        Cartao existingCartao = Cartao.builder()
                 .numeroCartao(cardNumber)
-                .senha(password)
+                .senhaCartao(password)
                 .saldo(500.0)
                 .build();
-        when(cardRepository.findByNumeroCartao(anyString())).thenReturn(Optional.of(existingCard));
 
-        Card createdCard = cardService.createCard(cardNumber, password);
+        when(cartaoRepository.findByNumeroCartao(cardNumber)).thenReturn(Optional.of(existingCartao));
 
-        assertNotNull(createdCard);
-        assertEquals(existingCard, createdCard);
+        ResponseEntity<?> responseEntity = cartaoService.createCard(cardNumber, password);
 
-        verify(cardRepository, times(1)).findByNumeroCartao(cardNumber);
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, responseEntity.getStatusCode());
+        assertNotNull(responseEntity.getBody());
 
-        verify(cardRepository, never()).save(any(Card.class));
+        verify(cartaoRepository, times(1)).findByNumeroCartao(cardNumber);
+        verify(cartaoRepository, never()).save(any(Cartao.class));
     }
-
 
     @Test
     void testCheckBalance_CardExists() {
         String cardNumber = "1234567890123456";
         double expectedBalance = 500.00;
 
-        when(cardRepository.findByNumeroCartao(anyString())).thenReturn(Optional.of(new Card()));
+        when(cartaoRepository.findByNumeroCartao(anyString())).thenReturn(Optional.of(new Cartao()));
 
-        double balance = cardService.checkBalance(cardNumber);
+        double balance = cartaoService.checkBalance(cardNumber);
 
         assertEquals(expectedBalance, balance);
 
-        verify(cardRepository, times(1)).findByNumeroCartao(cardNumber);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(cardNumber);
     }
 
     @Test
     void testCheckBalance_CardNotExists() {
         String cardNumber = "1234567890123456";
 
-        when(cardRepository.findByNumeroCartao(anyString())).thenReturn(Optional.empty());
+        when(cartaoRepository.findByNumeroCartao(anyString())).thenReturn(Optional.empty());
 
-        Double balance = cardService.checkBalance(cardNumber);
+        Double balance = cartaoService.checkBalance(cardNumber);
 
         assertNull(balance);
 
-        verify(cardRepository, times(1)).findByNumeroCartao(cardNumber);
+        verify(cartaoRepository, times(1)).findByNumeroCartao(cardNumber);
     }
 }
 

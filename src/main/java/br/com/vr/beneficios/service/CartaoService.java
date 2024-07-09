@@ -1,35 +1,37 @@
 package br.com.vr.beneficios.service;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.repository.CardRepository;
+import br.com.vr.beneficios.entities.Cartao;
+import br.com.vr.beneficios.repository.CartaoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CardService {
+public class CartaoService {
 
-    private final CardRepository cardRepository;
-
-    private final Card card;
+    private final CartaoRepository cartaoRepository;
 
     @Transactional
-    public Card createCard(String cardNumber, String password) {
-        return cardRepository.findByNumeroCartao(cardNumber)
+    public ResponseEntity<?> createCard(String cardNumber, String password) {
+        return cartaoRepository.findByNumeroCartao(cardNumber)
+                .map(existingCartao -> ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(existingCartao))
                 .orElseGet(() -> {
-                    Card newCard = Card.builder()
+                    Cartao newCartao = Cartao.builder()
                             .numeroCartao(cardNumber)
-                            .senha(password)
+                            .senhaCartao(password)
                             .build();
-                    return cardRepository.save(newCard);
+                    cartaoRepository.save(newCartao);
+                    return ResponseEntity.status(HttpStatus.CREATED).body(newCartao);
                 });
     }
 
     @Transactional(readOnly = true)
     public Double checkBalance(String cardNumber) {
-        return cardRepository.findByNumeroCartao(cardNumber)
-                .map(Card::getSaldo)
+        return cartaoRepository.findByNumeroCartao(cardNumber)
+                .map(Cartao::getSaldo)
                 .orElse(null);
     }
 }

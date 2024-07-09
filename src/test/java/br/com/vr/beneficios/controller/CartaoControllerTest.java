@@ -1,7 +1,8 @@
 package br.com.vr.beneficios.controller;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.service.CardService;
+import br.com.vr.beneficios.dto.CartaoDTO;
+import br.com.vr.beneficios.service.CartaoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -11,20 +12,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class CardControllerTest {
+class CartaoControllerTest {
 
     @Mock
-    private CardService cardService;
+    private CartaoService cartaoService;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
-    private CardController cardController;
+    private CartaoController cartaoController;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        cartaoController = new CartaoController(cartaoService, objectMapper);
     }
 
     @Test
@@ -32,13 +36,13 @@ class CardControllerTest {
         String cardNumber = "1234567890123456";
         String password = "1234";
 
-        when(cardService.createCard(anyString(), anyString())).thenReturn(new Card());
+        when(cartaoService.createCard(anyString(), anyString())).thenReturn(new ResponseEntity(HttpStatus.CREATED));
 
-        ResponseEntity<?> responseEntity = cardController.createCard(new Card(123L, cardNumber, password, 500.0));
+        ResponseEntity<?> responseEntity = cartaoController.createCard(new CartaoDTO(cardNumber, password));
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
 
-        verify(cardService, times(1)).createCard(cardNumber, password);
+        verify(cartaoService, times(1)).createCard(cardNumber, password);
     }
 
     @Test
@@ -46,14 +50,14 @@ class CardControllerTest {
         String cardNumber = "1234567890123456";
         double expectedBalance = 500.0;
 
-        when(cardService.checkBalance(anyString())).thenReturn(expectedBalance);
+        when(cartaoService.checkBalance(anyString())).thenReturn(expectedBalance);
 
-        ResponseEntity<?> responseEntity = cardController.checkBalance(cardNumber);
+        ResponseEntity<?> responseEntity = cartaoController.checkBalance(cardNumber);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(expectedBalance, responseEntity.getBody());
 
-        verify(cardService, times(1)).checkBalance(cardNumber);
+        verify(cartaoService, times(1)).checkBalance(cardNumber);
     }
 }
 

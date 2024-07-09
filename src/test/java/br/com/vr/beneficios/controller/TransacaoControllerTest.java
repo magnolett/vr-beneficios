@@ -1,8 +1,8 @@
 package br.com.vr.beneficios.controller;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.entities.Transaction;
-import br.com.vr.beneficios.service.TransactionService;
+import br.com.vr.beneficios.dto.CartaoDTO;
+import br.com.vr.beneficios.dto.TransacaoDTO;
+import br.com.vr.beneficios.service.TransacaoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -14,13 +14,13 @@ import org.springframework.http.ResponseEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-class TransactionControllerTest {
+class TransacaoControllerTest {
 
     @Mock
-    private TransactionService transactionService;
+    private TransacaoService transacaoService;
 
     @InjectMocks
-    private TransactionController transactionController;
+    private TransacaoController transacaoController;
 
     @BeforeEach
     void setUp() {
@@ -32,17 +32,17 @@ class TransactionControllerTest {
 
         String cardNumber = "1234567890123456";
         String senhaCartao = "1234";
-        Card card = Card.builder().numeroCartao(cardNumber).senha(senhaCartao).build();
+        CartaoDTO cartao = new CartaoDTO(cardNumber, senhaCartao);
 
-        Transaction transaction = Transaction.builder().card(card).amount(100.0).build();
+        TransacaoDTO transacao = new TransacaoDTO(cardNumber, senhaCartao, 500.0);
 
-        when(transactionService.authorizeTransaction(anyString(), anyString(), anyDouble()))
+        when(transacaoService.authorizeTransaction(anyString(), anyString(), anyDouble()))
                 .thenReturn(new ResponseEntity<>(HttpStatus.CREATED));
 
-        ResponseEntity<?> responseEntity = transactionController.authorizeTransaction(transaction);
+        ResponseEntity<?> responseEntity = transacaoController.authorizeTransaction(transacao);
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
 
-        verify(transactionService, times(1)).authorizeTransaction(anyString(), anyString(), anyDouble());
+        verify(transacaoService, times(1)).authorizeTransaction(anyString(), anyString(), anyDouble());
     }
 }

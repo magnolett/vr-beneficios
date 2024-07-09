@@ -1,55 +1,57 @@
 package br.com.vr.beneficios.service;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.entities.Transaction;
+import br.com.vr.beneficios.entities.Cartao;
+import br.com.vr.beneficios.entities.Transacao;
 import br.com.vr.beneficios.exception.CardNotFoundException;
 import br.com.vr.beneficios.exception.InsufficientBalanceException;
 import br.com.vr.beneficios.exception.InvalidPasswordException;
-import br.com.vr.beneficios.repository.CardRepository;
-import br.com.vr.beneficios.repository.TransactionRepository;
+import br.com.vr.beneficios.repository.CartaoRepository;
+import br.com.vr.beneficios.repository.TransacaoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class TransactionService {
+public class TransacaoService {
 
-    private final TransactionRepository transactionRepository;
-    private final CardRepository cardRepository;
+    private final TransacaoRepository transacaoRepository;
+    private final CartaoRepository cartaoRepository;
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ResponseEntity<?> authorizeTransaction(String cardNumber, String senhaCartao, double valor) {
-        Card card = cardRepository.findByNumeroCartao(cardNumber)
+        Cartao cartao = cartaoRepository.findByNumeroCartao(cardNumber)
                 .orElseThrow(() -> new CardNotFoundException("CARTAO_INEXISTENTE"));
 
-        validatePassword(card, senhaCartao);
-        validateBalance(card, valor);
+        validatePassword(cartao, senhaCartao);
+        validateBalance(cartao, valor);
 
-        card.setSaldo(card.getSaldo() - valor);
-        cardRepository.save(card);
+        cartao.setSaldo(cartao.getSaldo() - valor);
+        cartaoRepository.save(cartao);
 
-        Transaction transaction = Transaction.builder()
-                .card(card)
-                .amount(valor)
+        Transacao transacao = Transacao.builder()
+                .numeroCartao(cardNumber)
+                .senhaCartao(senhaCartao)
+                .valor(valor)
                 .build();
-        transactionRepository.save(transaction);
+        transacaoRepository.save(transacao);
 
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    private void validatePassword(Card card, String senhaCartao) {
-        Optional.of(card)
-                .filter(c -> c.getSenha().equals(senhaCartao))
+    private void validatePassword(Cartao cartao, String senhaCartao) {
+        Optional.of(cartao)
+                .filter(c -> c.getSenhaCartao().equals(senhaCartao))
                 .orElseThrow(() -> new InvalidPasswordException("SENHA_INVALIDA"));
     }
 
-    private void validateBalance(Card card, double valor) {
-        Optional.of(card)
+    private void validateBalance(Cartao cartao, double valor) {
+        Optional.of(cartao)
                 .filter(c -> c.getSaldo() >= valor)
                 .orElseThrow(() -> new InsufficientBalanceException("SALDO_INSUFICIENTE"));
     }

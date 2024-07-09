@@ -1,7 +1,7 @@
 package br.com.vr.beneficios.controller;
 
-import br.com.vr.beneficios.entities.Transaction;
-import br.com.vr.beneficios.service.TransactionService;
+import br.com.vr.beneficios.dto.TransacaoDTO;
+import br.com.vr.beneficios.service.TransacaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,17 +13,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/transacoes")
 @RequiredArgsConstructor
-public class TransactionController {
+public class TransacaoController {
 
-    private final TransactionService transactionService;
+    private final TransacaoService transacaoService;
 
     @PostMapping
-    public ResponseEntity<?> authorizeTransaction(@RequestBody Transaction transaction) {
+    public ResponseEntity<String> authorizeTransaction(@RequestBody TransacaoDTO transacao) {
+        transacaoService.authorizeTransaction(transacao.getNumeroCartao(), transacao.getSenhaCartao(), transacao.getValor());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(transactionService.authorizeTransaction(
-                        transaction.getCard().getNumeroCartao(),
-                        transaction.getCard().getSenha(),
-                        transaction.getAmount()));
+                .body("OK");
     }
 }
 

@@ -1,29 +1,31 @@
 package br.com.vr.beneficios.controller;
 
-import br.com.vr.beneficios.entities.Card;
-import br.com.vr.beneficios.service.CardService;
+import br.com.vr.beneficios.dto.CartaoDTO;
+import br.com.vr.beneficios.service.CartaoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/cartoes")
 @RequiredArgsConstructor
-public class CardController {
+public class CartaoController {
 
-    private final CardService cardService;
+    private final CartaoService cartaoService;
+    private final ObjectMapper objectMapper;
 
     @PostMapping
-    public ResponseEntity<?> createCard(@RequestBody Card card) {
-        Card createdCard = cardService.createCard(card.getNumeroCartao(), card.getSenha());
-        return ResponseEntity.status(createdCard != null ? HttpStatus.CREATED : HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(createdCard);
+    public ResponseEntity<?> createCard(@RequestBody CartaoDTO cartao) {
+        ResponseEntity<?> responseEntity = cartaoService.createCard(cartao.getNumeroCartao(), cartao.getSenhaCartao());
+        CartaoDTO cartaoResponseDTO = objectMapper.convertValue(responseEntity.getBody(), CartaoDTO.class);
+        return ResponseEntity.status(responseEntity.getStatusCode())
+                .body(cartaoResponseDTO);
     }
 
     @GetMapping("/{numeroCartao}")
     public ResponseEntity<?> checkBalance(@PathVariable String numeroCartao) {
-        Double balance = cardService.checkBalance(numeroCartao);
+        Double balance = cartaoService.checkBalance(numeroCartao);
         return balance == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(balance);
 
     }
