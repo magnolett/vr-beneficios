@@ -27,17 +27,4 @@ public class CardController {
         return balance == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(balance);
 
     }
-
-    @PostMapping("/transacoes")
-    public ResponseEntity<?> authorizeTransaction(
-            @RequestParam String cardNumber,
-            @RequestParam String password,
-            @RequestParam double amount) {
-
-        boolean authorized = cardService.authorizeTransaction(cardNumber, password, amount);
-        if (!authorized) {
-            return ResponseEntity.unprocessableEntity().build();
-        }
-        return ResponseEntity.ok("Transaction authorized");
-    }
 }

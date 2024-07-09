@@ -16,32 +16,21 @@ public class CardService {
 
     @Transactional
     public Card createCard(String cardNumber, String password) {
-        return cardRepository.findByCardNumber(cardNumber)
+        return cardRepository.findByNumeroCartao(cardNumber)
                 .orElseGet(() -> {
-                    Card newCard = new Card();
-                    newCard.setNumeroCartao(cardNumber);
-                    newCard.setSenha(password);
+                    Card newCard = Card.builder()
+                            .numeroCartao(cardNumber)
+                            .senha(password)
+                            .build();
                     return cardRepository.save(newCard);
                 });
     }
 
     @Transactional(readOnly = true)
     public Double checkBalance(String cardNumber) {
-        return cardRepository.findByCardNumber(cardNumber)
+        return cardRepository.findByNumeroCartao(cardNumber)
                 .map(Card::getSaldo)
                 .orElse(null);
-    }
-
-    @Transactional
-    public boolean authorizeTransaction(String cardNumber, String password, double amount) {
-        return cardRepository.findByCardNumberAndPasswordAndBalanceGreaterThanEqual(
-                        cardNumber, password, amount)
-                .map(card -> {
-                    card.setSaldo(card.getSaldo() - amount);
-                    cardRepository.save(card);
-                    return true;
-                })
-                .orElse(false);
     }
 }
 

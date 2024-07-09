@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("/transacoes")
 @RequiredArgsConstructor
 public class TransactionController {
 
@@ -21,9 +21,9 @@ public class TransactionController {
     public ResponseEntity<?> authorizeTransaction(@RequestBody Transaction transaction) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(transactionService.authorizeTransaction(
-                        transaction.getCardNumber(),
-                        transaction.getAmount(),
-                        transaction.isAuthorized()));
+                        transaction.getCard().getNumeroCartao(),
+                        transaction.getCard().getSenha(),
+                        transaction.getAmount()));
     }
 }
 

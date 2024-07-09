@@ -1,5 +1,6 @@
 package br.com.vr.beneficios.controller;
 
+import br.com.vr.beneficios.entities.Card;
 import br.com.vr.beneficios.entities.Transaction;
 import br.com.vr.beneficios.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,19 +29,20 @@ class TransactionControllerTest {
 
     @Test
     void testAuthorizeTransaction_Success() {
-        Transaction transaction = new Transaction();
-        transaction.setCardNumber("1234567890123456");
-        transaction.setAmount(100.0);
-        transaction.setAuthorized(true);
 
-        when(transactionService.authorizeTransaction(anyString(), anyDouble(), anyBoolean()))
-                .thenReturn(new Transaction()); // Mocking the service method to return true for successful authorization
+        String cardNumber = "1234567890123456";
+        String senhaCartao = "1234";
+        Card card = Card.builder().numeroCartao(cardNumber).senha(senhaCartao).build();
+
+        Transaction transaction = Transaction.builder().card(card).amount(100.0).build();
+
+        when(transactionService.authorizeTransaction(anyString(), anyString(), anyDouble()))
+                .thenReturn(new ResponseEntity<>(HttpStatus.CREATED));
 
         ResponseEntity<?> responseEntity = transactionController.authorizeTransaction(transaction);
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        assertEquals("Transaction authorized", responseEntity.getBody());
 
-        verify(transactionService, times(1)).authorizeTransaction(anyString(), anyDouble(), anyBoolean());
+        verify(transactionService, times(1)).authorizeTransaction(anyString(), anyString(), anyDouble());
     }
 }

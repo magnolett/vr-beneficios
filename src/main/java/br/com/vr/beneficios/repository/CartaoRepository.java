@@ -9,8 +9,6 @@ import java.util.Optional;
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
 
-    Optional<Card> findByCardNumber(String cardNumber);
+    Optional<Card> findByNumeroCartao(String numeroCartao);
 
-    Optional<Card> findByCardNumberAndPasswordAndBalanceGreaterThanEqual(
-            String cardNumber, String password, double balance);
 }
